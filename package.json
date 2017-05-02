@@ -7,5 +7,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "coffee-script": "^1.12.5",
+    "express": "^4.15.2",
+    "jstransformer-coffee-script": "^1.1.0",
+    "pug": "^2.0.0-beta.12",
+    "request": "^2.81.0",
+    "ws": "^2.3.1"
+  }
 }

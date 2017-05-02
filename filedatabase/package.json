@@ -1,0 +1,16 @@
+{
+  "name": "filedatabase",
+  "version": "1.0.0",
+  "description": "",
+  "main": "fileDB.coffee",
+  "dependencies": {
+    "coffee-script": "^1.12.5",
+    "nicelogger": "^17.4.4-b"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
