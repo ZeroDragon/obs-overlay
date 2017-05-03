@@ -1,5 +1,7 @@
--var  = "zerodragon"
 -var reactions = ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
+-var displayReactions = true
+-var displayCamera = true
+-var displayChat = true
 html
 	head
 		title Social Integration
@@ -10,9 +12,6 @@ html
 		style
 			:stylus
 				accentColor = #ff6a00
-				displayReactions = true
-				displayCamera = true
-				displayTwitchChat = true
 				saltWidth = 30px
 				cameraWidth = 300
 				cameraHeight = 180
@@ -39,7 +38,6 @@ html
 					background-size cover
 				.cameraZone
 					display none
-					display flex if displayCamera
 					position absolute
 					bottom (spacing + reactionsHeight + spacing)px
 					right spacing
@@ -104,7 +102,6 @@ html
 							height 5px
 				.reactionsZone
 					display none
-					display flex if displayReactions
 					justify-content space-between
 					position absolute
 					right spacing
@@ -124,7 +121,6 @@ html
 						margin-top -10px
 				.chatZone
 					display none
-					display flex if displayReactions
 					width cameraWidth
 					height 250px
 					-webkit-mask-image linear-gradient(to bottom, rgba(#000,0) 10%,rgba(#000,1) 80%)
@@ -172,7 +168,7 @@ html
 		include ../assets/twitch.svg
 		include ../assets/facebook.svg
 		.container.relative#app
-			.chatZone
+			.chatZone(style=`display:${displayChat?'flex':'none'};`)
 				.row(v-for="row in comments",v-bind:class="row.source")
 					.author
 						i.source.twitch: svg(viewBox="0 0 128 138"): use(xlink:href="#twitch")
@@ -180,7 +176,7 @@ html
 						|{{row.author}}
 						span.time {{row.time}}
 					.message(v-html="row.message")
-			.cameraZone: .relative
+			.cameraZone(style=`display:${displayCamera?'flex':'none'};`): .relative
 				.inner
 				.accent: .relative
 					.rect2
@@ -190,7 +186,7 @@ html
 					.rect2
 					.rect1
 					.triangle
-			.reactionsZone
+			.reactionsZone(style=`display:${displayReactions?'flex':'none'};`)
 				for reaction in reactions
 					.reaction(class=`${reaction}`)
 						img(src=`/${reaction}.gif`)

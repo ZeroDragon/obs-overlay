@@ -41,38 +41,63 @@ html
 						font-size 12px
 						a
 							color #008000
-
+					.reactionsSelector
+						display flex
+						background-color #fff
+						justify-content space-around
+						border-radius 4px
+						.ract
+							text-align center
+							padding-bottom 10px;
+						img
+							width 100%
+							max-width 100px
+							display block
+					.saveBtn
+						position fixed
+						top 10px
+						right 10px
+						font-size 30px
+						background-color green
+						color white
+						padding 4px 20px
+						border-radius 4px
+						font-weight 100
+						cursor pointer
+						&:hover
+							background-color darken(green,20%)
 	body
 		#app
+			.saveBtn(v-on:click="saveData") SAVE
 			.section
 				h2 Facebook
 				.row
 					label(for="fb_access_token") Access Token <span class="req">(Required)</span>
-					input#fb_access_token(type="text",v-model="fb_access_token")
+					input#fb_access_token(type="text",v-model="obj.fb_access_token")
 					.text You need a facebook app to access facebook reactions and comments for an specific post.
 					.text Follow <a target="_blank" href="https://smashballoon.com/custom-facebook-feed/access-token/">this guide</a> to get one
 				.row
 					label(for="fb_post_id") Post ID <span class="req">(Required)</span>
-					input#fb_post_id(type="text",v-model="fb_post_id")
+					input#fb_post_id(type="text",v-model="obj.fb_post_id")
 					.text Once you have your post in facebook, you'll need to get the POST id to pull data from
 					.text Follow <a target="_blank" href="http://blog.krischant.com/post/54131988674/tutorial-finding-a-post-or-comment-id-on-facebook">this guide</a> to find it
 				.row
 					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional, default: 5 seconds)</span>
-					input#fb_refresh_time(type="text",placeholder="5",v-model="fb_refresh_time")
+					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.fb_refresh_time")
 					.text Needed to set the polling frequency. 5 seconds is recommended to avoid excess traffic.
 			br
 			.section
 				h2 Twitch
 				.row
 					label(for="twitch_username") User <span class="req">(Required)</span>
-					input#twitch_username(type="text",v-model="twitch_username")
+					input#twitch_username(type="text",v-model="obj.twitch_username")
 					.text Your twitch username / channel name
 				.row
 					.text For the next part, you'll need to create a custom app in your twitch account. Follow <a target="_blank" href="https://dev.twitch.tv/docs/v5/guides/authentication/#registration">this instructions</a> to create one and get your Client ID.
 					.text Choose anything for the fields, except <b>Redirect URI</b>, that one must be: <b>http://localhost:1337/oauth</b>
 				.row
 					label(for="twitch_client_id") Client ID <span class="req">(Required)</span>
-					input#twitch_client_id(type="text",v-model="twitch_client_id")
+					input#twitch_client_id(type="text",v-model="obj.twitch_client_id")
 					.text obtained from your new generated twitch app
 				.row
 					.text
@@ -81,6 +106,29 @@ html
 							target="popup" 
 							v-bind:onclick="oauthURL2"
 						) follow this link
+			br
+			.section
+				h2 Display
+				.row
+					input#display_chat(type="checkbox",v-model="obj.display_chat")
+					label(for="display_chat") Display chat <span class="nreq">(Requires Twitch or Facebook)</span>
+					.text Facebook comments and Twitch chat are mixed into a single chat feed
+				.row
+					input#display_camera(type="checkbox",v-model="obj.display_camera")
+					label(for="display_camera") Display Camera
+				.row
+					input#display_reactions(type="checkbox",v-model="obj.display_reactions")
+					label(for="display_reactions") Display Reactions <span class="req">(Requires Facebook)</span>
+				.row
+					label Select Reactions
+					.reactionsSelector
+						for reaction in ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
+							.ract
+								label
+									img(src=`${reaction}.gif`)
+									input(type="checkbox",v-model=`obj.reaction_${reaction}`)
+
+
 		script
 			:coffee-script(bare)
 				$computed = {
@@ -90,13 +138,49 @@ html
 						return "window.open('https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.twitch_client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login','popup','width=600,height=600');"
 				}
 				$scope =
-					fb_access_token : ""
-					fb_post_id : ""
-					fb_refresh_time : "5"
-					twitch_username : ""
-					twitch_client_id : ""
+					obj : []
+
+				$methods =
+					saveData : ->
+						$.post '/saveConfig', $scope.obj
 
 				app = new Vue
 					el : "#app"
 					data : $scope
 					computed : $computed
+					methods : $methods
+
+				$.get '/actualConfigurations', (data)->
+					facebook = data.filter((e)-> e.key is 'facebook')[0]
+					if facebook?.value?
+						facebook = facebook.value
+					else
+						facebook = {}
+					twitch = data.filter((e)-> e.key is 'twitch')[0]
+					if twitch?.value?
+						twitch = twitch.value
+					else
+						twitch = {}
+					displays = data.filter((e)-> e.key is 'displays')[0]
+					if displays?.value?
+						displays = displays.value
+					else
+						displays = {}
+
+					$scope.obj = {
+						fb_access_token : facebook.acces_token or ""
+						fb_post_id : facebook.post_id or ""
+						fb_refresh_time : facebook.refresh_time or "5"
+						twitch_username : twitch.username or ""
+						twitch_client_id : twitch.client_id or ""
+						display_chat : displays.chat or true
+						display_camera : displays.camera or true
+						display_reactions : displays.reactions or true
+						reaction_LIKE : displays.reaction_LIKE or true
+						reaction_LOVE : displays.reaction_LOVE or true
+						reaction_HAHA : displays.reaction_HAHA or true
+						reaction_WOW : displays.reaction_WOW or true
+						reaction_SAD : displays.reaction_SAD or true
+						reaction_ANGRY : displays.reaction_ANGRY or true
+						reaction_SALT : displays.reaction_SALT or true
+					}
