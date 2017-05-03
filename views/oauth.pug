@@ -1,0 +1,13 @@
+body
+	header
+		script(src="https://code.jquery.com/jquery-2.2.4.min.js")
+	body
+		|You can close this tab now
+		script
+			:coffee-script(bare)
+				strip1 = document.location.hash.split('&')[0]
+				strip1 = strip1.split(/=/).pop()
+				console.log 'here'
+				$.get "/oauth/#{strip1}", ->
+					console.log 'here2'
+					self.close()

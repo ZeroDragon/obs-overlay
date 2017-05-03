@@ -1,8 +1,9 @@
-{facebook:{access_token:access_token,postID:postID,refreshTime:refreshTime,defaultCount:defaultCount}} = require './config.json'
 request = require 'request'
 EventEmitter = require('events')
 myEmitter = new EventEmitter()
 
+access_token = postID = refreshTime = null
+timer1 = timer2 = null
 addZ = (i)-> "00#{i}".slice(-2)
 reactionsArray = ['LIKE', 'LOVE', 'WOW', 'HAHA', 'SAD', 'ANGRY']
 reactions = reactionsArray
@@ -36,9 +37,18 @@ refreshComments = ->
 		for comment in data
 			myEmitter.emit 'comment', comment
 
-setInterval refreshCounts, refreshTime * 1000
-refreshCounts()
-setInterval refreshComments, refreshTime * 1000
-refreshComments()
+rComments = ->
+	clearTimeout(timer1) if timer1
+	refreshComments()
+	timer1 = setTimeout rComments, refreshTime * 1000
 
-module.exports = myEmitter
+rCounts = ->
+	clearTimeout(timer2) if timer2
+	refreshCounts()
+	timer2 = setTimeout rCounts, refreshTime * 1000
+
+module.exports = (conf)->
+	{access_token,postID,refreshTime} = conf
+	rComments()
+	rCounts()
+	return myEmitter

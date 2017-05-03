@@ -1,8 +1,5 @@
 fileDB = require './filedatabase'
 brain = new fileDB
-facebookMiner = require './miner-facebook'
-twitchMiner = require './miner-twitch'
-{facebook:{postID:postID}} = require './config.json'
 addZ = (i)-> "00#{i}".slice(-2)
 
 saveComment = (comment)->
@@ -10,6 +7,7 @@ saveComment = (comment)->
 	brain.ttl "comments:#{comment.key}", 86400
 
 saveReaction = (reaction,count)->
+	{facebook:{postID:postID}} = brain.get 'config:facebook'
 	reactionKey = "reactions:#{postID}"
 	actual = brain.get reactionKey
 	if actual?
@@ -21,6 +19,7 @@ saveReaction = (reaction,count)->
 	brain.ttl reactionKey, 86400
 
 saveSalt = (plusOrMinus)->
+	{facebook:{postID:postID}} = brain.get 'config:facebook'
 	reactionKey = "reactions:#{postID}"
 	actual = brain.get reactionKey
 	actual = {SALT:0} unless actual?.SALT?
@@ -29,9 +28,14 @@ saveSalt = (plusOrMinus)->
 	brain.set reactionKey, actual
 	brain.ttl reactionKey, 86400
 
-facebookMiner.on 'reaction', saveReaction
-facebookMiner.on 'comment', saveComment
-twitchMiner.on 'chat', saveComment
-twitchMiner.on 'salter', saveSalt
+if brain.get 'config:facebook'
+	facebookMiner = require('./miner-facebook')(brain.get('config:facebook'))
+	facebookMiner.on 'reaction', saveReaction
+	facebookMiner.on 'comment', saveComment
+
+if brain.get 'config:twitch'
+	twitchMiner = require('./miner-twitch')(brain.get('config:twitch'))
+	twitchMiner.on 'chat', saveComment
+	twitchMiner.on 'salter', saveSalt
 
 module.exports = brain

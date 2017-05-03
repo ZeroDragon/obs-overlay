@@ -1,9 +1,9 @@
 WebSocket = require 'ws' 
 parseIRC = require './parseIRC'
 getEmotes = require './generateEmotes'
-{twitch} = require './config.json'
 robot = require './robot'
 emoticons = null
+twitch = null
 EventEmitter = require('events')
 myEmitter = new EventEmitter()
 
@@ -46,37 +46,40 @@ processTwitchMessage = (nick,tags,message)->
 		}
 	}
 	
+startSocket = ->
+	socket = new WebSocket 'wss://irc-ws.chat.twitch.tv', 'irc', { reconnectInterval: 3000 }
+	socket.onopen = (data)->
+		{emoticons} = getEmotes()
+		# processTwitchMessage(null, null, "Connected.")
+		socket.send("PASS #{twitch.pass}\r\n")
+		socket.send("NICK #{twitch.user}\r\n")
+		socket.send('CAP REQ :twitch.tv/commands twitch.tv/tags\r\n')
+		socket.send("JOIN ##{twitch.user}\r\n")
 
-socket = new WebSocket 'wss://irc-ws.chat.twitch.tv', 'irc', { reconnectInterval: 3000 }
-socket.onopen = (data)->
-	{emoticons} = getEmotes()
-	# processTwitchMessage(null, null, "Connected.")
-	socket.send("PASS #{twitch.pass}\r\n")
-	socket.send("NICK #{twitch.user}\r\n")
-	socket.send('CAP REQ :twitch.tv/commands twitch.tv/tags\r\n')
-	socket.send("JOIN ##{twitch.user}\r\n")
+	socket.onclose = ->
+		# processTwitchMessage(null, null, "You were disconnected from the server.")
 
-socket.onclose = ->
-	# processTwitchMessage(null, null, "You were disconnected from the server.")
+	socket.onmessage = (data)->
+		message = parseIRC(data.data.trim())
+		return if !message.command
+		switch message.command
+			when "PING"
+				socket.send 'PONG ' + message.params[0]
+				return
+			when "JOIN"
+				# processTwitchMessage null, null, "Joined channel: #{twitch.user}"
+				return
+			when "CLEARCHAT"
+				console.log(message.params[1]) if message.params[1]
+				return
+			when "PRIVMSG"
+				{emoticons} = getEmotes()
+				return if message.params[0] isnt "##{twitch.user}" or !message.params[1]
+				nick = message.prefix.split('@')[0].split('!')[0]
+				processTwitchMessage nick, message.tags, message.params[1]
+				return
 
-socket.onmessage = (data)->
-	message = parseIRC(data.data.trim())
-	return if !message.command
-	switch message.command
-		when "PING"
-			socket.send 'PONG ' + message.params[0]
-			return
-		when "JOIN"
-			# processTwitchMessage null, null, "Joined channel: #{twitch.user}"
-			return
-		when "CLEARCHAT"
-			console.log(message.params[1]) if message.params[1]
-			return
-		when "PRIVMSG"
-			{emoticons} = getEmotes()
-			return if message.params[0] isnt "##{twitch.user}" or !message.params[1]
-			nick = message.prefix.split('@')[0].split('!')[0]
-			processTwitchMessage nick, message.tags, message.params[1]
-			return
-
-module.exports = myEmitter
+module.exports = (cnf)->
+	twitch = cnf
+	startSocket()
+	return myEmitter
