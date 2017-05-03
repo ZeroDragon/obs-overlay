@@ -73,31 +73,35 @@ html
 				h2 Facebook
 				.row
 					label(for="fb_access_token") Access Token <span class="req">(Required)</span>
-					input#fb_access_token(type="text",v-model="obj.fb_access_token")
+					input#fb_access_token(type="text",v-model="obj.facebook.access_token")
 					.text You need a facebook app to access facebook reactions and comments for an specific post.
 					.text Follow <a target="_blank" href="https://smashballoon.com/custom-facebook-feed/access-token/">this guide</a> to get one
 				.row
 					label(for="fb_post_id") Post ID <span class="req">(Required)</span>
-					input#fb_post_id(type="text",v-model="obj.fb_post_id")
+					input#fb_post_id(type="text",v-model="obj.facebook.post_id")
 					.text Once you have your post in facebook, you'll need to get the POST id to pull data from
 					.text Follow <a target="_blank" href="http://blog.krischant.com/post/54131988674/tutorial-finding-a-post-or-comment-id-on-facebook">this guide</a> to find it
 				.row
 					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional, default: 5 seconds)</span>
-					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.fb_refresh_time")
+					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.facebook.refresh_time")
 					.text Needed to set the polling frequency. 5 seconds is recommended to avoid excess traffic.
 			br
 			.section
 				h2 Twitch
 				.row
 					label(for="twitch_username") User <span class="req">(Required)</span>
-					input#twitch_username(type="text",v-model="obj.twitch_username")
-					.text Your twitch username / channel name
+					input#twitch_username(type="text",v-model="obj.twitch.username")
+					.text Your bot's twitch username
+				.row
+					label(for="twitch_channel") Channel <span class="req">(Required)</span>
+					input#twitch_channel(type="text",v-model="obj.twitch.channel")
+					.text The channel where the stream is
 				.row
 					.text For the next part, you'll need to create a custom app in your twitch account. Follow <a target="_blank" href="https://dev.twitch.tv/docs/v5/guides/authentication/#registration">this instructions</a> to create one and get your Client ID.
 					.text Choose anything for the fields, except <b>Redirect URI</b>, that one must be: <b>http://localhost:1337/oauth</b>
 				.row
 					label(for="twitch_client_id") Client ID <span class="req">(Required)</span>
-					input#twitch_client_id(type="text",v-model="obj.twitch_client_id")
+					input#twitch_client_id(type="text",v-model="obj.twitch.client_id")
 					.text obtained from your new generated twitch app
 				.row
 					.text
@@ -106,19 +110,27 @@ html
 							target="popup" 
 							v-bind:onclick="oauthURL2"
 						) follow this link
+				.row
+					label(for="twitch_pass") Token <span class="nreq">(Auto generated)</span>
+					input#twitch_pass(type="text",v-model="obj.twitch.pass" disabled)
+					.text this value is pupulated after you click the previous link.
 			br
 			.section
 				h2 Display
 				.row
-					input#display_chat(type="checkbox",v-model="obj.display_chat")
-					label(for="display_chat") Display chat <span class="nreq">(Requires Twitch or Facebook)</span>
+					input#displays_chat(type="checkbox",v-model="obj.displays.chat")
+					label(for="displays_chat") Display chat <span class="nreq">(Requires Twitch or Facebook)</span>
 					.text Facebook comments and Twitch chat are mixed into a single chat feed
 				.row
-					input#display_camera(type="checkbox",v-model="obj.display_camera")
-					label(for="display_camera") Display Camera
+					input#displays_bot(type="checkbox",v-model="obj.displays.bot_in_chat")
+					label(for="displays_bot") Display bot in chat <span class="nreq">(Requires Twitch)</span>
+					.text Toggle this to log bot's own messages on the chat
 				.row
-					input#display_reactions(type="checkbox",v-model="obj.display_reactions")
-					label(for="display_reactions") Display Reactions <span class="req">(Requires Facebook)</span>
+					input#displays_camera(type="checkbox",v-model="obj.displays.camera")
+					label(for="displays_camera") Display Camera
+				.row
+					input#displays_reactions(type="checkbox",v-model="obj.displays.reactions")
+					label(for="displays_reactions") Display Reactions <span class="req">(Requires Facebook)</span>
 				.row
 					label Select Reactions
 					.reactionsSelector
@@ -126,19 +138,19 @@ html
 							.ract
 								label
 									img(src=`${reaction}.gif`)
-									input(type="checkbox",v-model=`obj.reaction_${reaction}`)
+									input(type="checkbox",v-model=`obj.displays.reaction_${reaction}`)
 
 
 		script
 			:coffee-script(bare)
 				$computed = {
 					oauthURL : ->
-						return "https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.twitch_client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login"
+						return "https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.obj.twitch.client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login"
 					oauthURL2 : ->
-						return "window.open('https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.twitch_client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login','popup','width=600,height=600');"
+						return "window.open('https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.obj.twitch.client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login','popup','width=600,height=600');"
 				}
 				$scope =
-					obj : []
+					obj : {facebook:{},twitch:{},displays:{}}
 
 				$methods =
 					saveData : ->
@@ -150,37 +162,49 @@ html
 					computed : $computed
 					methods : $methods
 
-				$.get '/actualConfigurations', (data)->
-					facebook = data.filter((e)-> e.key is 'facebook')[0]
-					if facebook?.value?
-						facebook = facebook.value
-					else
-						facebook = {}
-					twitch = data.filter((e)-> e.key is 'twitch')[0]
-					if twitch?.value?
-						twitch = twitch.value
-					else
-						twitch = {}
-					displays = data.filter((e)-> e.key is 'displays')[0]
-					if displays?.value?
-						displays = displays.value
-					else
-						displays = {}
+				update = ->
+					$.get '/actualConfigurations', (data)->
+						facebook = data.filter((e)-> e.key is 'facebook')[0]
+						if facebook?.value?
+							facebook = facebook.value
+						else
+							facebook = {}
 
-					$scope.obj = {
-						fb_access_token : facebook.acces_token or ""
-						fb_post_id : facebook.post_id or ""
-						fb_refresh_time : facebook.refresh_time or "5"
-						twitch_username : twitch.username or ""
-						twitch_client_id : twitch.client_id or ""
-						display_chat : displays.chat or true
-						display_camera : displays.camera or true
-						display_reactions : displays.reactions or true
-						reaction_LIKE : displays.reaction_LIKE or true
-						reaction_LOVE : displays.reaction_LOVE or true
-						reaction_HAHA : displays.reaction_HAHA or true
-						reaction_WOW : displays.reaction_WOW or true
-						reaction_SAD : displays.reaction_SAD or true
-						reaction_ANGRY : displays.reaction_ANGRY or true
-						reaction_SALT : displays.reaction_SALT or true
-					}
+						twitch = data.filter((e)-> e.key is 'twitch')[0]
+						if twitch?.value?
+							twitch = twitch.value
+						else
+							twitch = {}
+						displaysRaw = data.filter((e)-> e.key is 'displays')[0]
+						displays = {chat:true,bot_in_chat : true,camera : true,reactions : true,reaction_LIKE : true,reaction_LOVE : true,reaction_HAHA : true,reaction_WOW : true,reaction_SAD : true,reaction_ANGRY : true,reaction_SALT : true,}
+						if displaysRaw?.value?
+							for own k,v of displaysRaw.value
+								displays[k] = v is 'true'
+
+						$scope.obj = {
+							facebook : {
+								access_token : facebook.access_token or ""
+								post_id : facebook.post_id or ""
+								refresh_time : facebook.refresh_time or "5"
+							}
+							twitch : {
+								username : twitch.username or ""
+								channel : twitch.channel or ""
+								client_id : twitch.client_id or ""
+								pass : twitch.pass or ""
+							}
+							displays : {
+								chat : displays.chat
+								bot_in_chat : displays.bot_in_chat
+								camera : displays.camera
+								reactions : displays.reactions
+								reaction_LIKE : displays.reaction_LIKE
+								reaction_LOVE : displays.reaction_LOVE
+								reaction_HAHA : displays.reaction_HAHA
+								reaction_WOW : displays.reaction_WOW
+								reaction_SAD : displays.reaction_SAD
+								reaction_ANGRY : displays.reaction_ANGRY
+								reaction_SALT : displays.reaction_SALT
+							}
+						}
+				update()

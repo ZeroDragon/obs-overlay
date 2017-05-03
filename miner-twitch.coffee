@@ -1,4 +1,4 @@
-WebSocket = require 'ws' 
+WebSocket = require 'ws'
 parseIRC = require './parseIRC'
 getEmotes = require './generateEmotes'
 robot = require './robot'
@@ -8,7 +8,6 @@ EventEmitter = require('events')
 myEmitter = new EventEmitter()
 
 processTwitchMessage = (nick,tags,message)->
-	robot message,(r,v)-> myEmitter.emit(r,v) if r
 	displayNick = "Chat"
 	if nick? and tags?
 		displayNick = tags["display-name"] or nick
@@ -47,14 +46,16 @@ processTwitchMessage = (nick,tags,message)->
 	}
 	
 startSocket = ->
+	return unless twitch.pass? and twitch.username? and twitch.channel?
+	return if twitch.pass is '' or twitch.username is ''
+	channel = if twitch.channel isnt '' then twitch.channel else twitch.username
 	socket = new WebSocket 'wss://irc-ws.chat.twitch.tv', 'irc', { reconnectInterval: 3000 }
 	socket.onopen = (data)->
-		{emoticons} = getEmotes()
 		# processTwitchMessage(null, null, "Connected.")
-		socket.send("PASS #{twitch.pass}\r\n")
-		socket.send("NICK #{twitch.user}\r\n")
-		socket.send('CAP REQ :twitch.tv/commands twitch.tv/tags\r\n')
-		socket.send("JOIN ##{twitch.user}\r\n")
+		socket.send("PASS oauth:#{twitch.pass}\r\n")
+		socket.send("NICK #{twitch.username}\r\n")
+		socket.send('CAP REQ :twitch.tv/commands twitch.tv/tags twitch.tv/membership\r\n')
+		socket.send("JOIN ##{twitch.channel}\r\n")
 
 	socket.onclose = ->
 		# processTwitchMessage(null, null, "You were disconnected from the server.")
@@ -67,19 +68,28 @@ startSocket = ->
 				socket.send 'PONG ' + message.params[0]
 				return
 			when "JOIN"
-				# processTwitchMessage null, null, "Joined channel: #{twitch.user}"
+				# processTwitchMessage null, null, "Joined channel: #{twitch.username}"
 				return
 			when "CLEARCHAT"
-				console.log(message.params[1]) if message.params[1]
+				# console.log(message.params[1]) if message.params[1]
 				return
 			when "PRIVMSG"
 				{emoticons} = getEmotes()
-				return if message.params[0] isnt "##{twitch.user}" or !message.params[1]
+				return if message.params[0] isnt "##{twitch.channel}" or !message.params[1]
 				nick = message.prefix.split('@')[0].split('!')[0]
 				processTwitchMessage nick, message.tags, message.params[1]
+				robot message,(r,v,s)->
+					if s
+						socket.send("PRIVMSG ##{twitch.channel} :"+ s)
+						if twitch.bot_in_chat is 'true'
+							processTwitchMessage 'BOT', {emotes:true}, s
+					myEmitter.emit(r,v) if r
 				return
+			# else
+			# 	console.log message.command,message
 
 module.exports = (cnf)->
+	{emoticons} = getEmotes()
 	twitch = cnf
 	startSocket()
 	return myEmitter

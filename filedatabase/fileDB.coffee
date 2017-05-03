@@ -13,7 +13,10 @@ module.exports = class FileDB
 		fs.writeFileSync "#{@storage}#{file}", JSON.stringify data
 	getFromFile : (file)->
 		if fs.existsSync "#{@storage}#{file}"
-			return JSON.parse fs.readFileSync "#{@storage}#{file}", {encoding:'utf8'}
+			try
+				return JSON.parse fs.readFileSync "#{@storage}#{file}", {encoding:'utf8'}
+			catch e
+				return []
 		return []
 	processRef : (ref)->
 		[file,key] = ref.split(':')

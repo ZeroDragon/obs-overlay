@@ -13,12 +13,16 @@ reactions = reactionsArray
 	.join(',')
 
 refreshCounts = ->
+	return unless postID?
+	return if postID is ''
 	url = "https://graph.facebook.com/v2.8/?ids=#{postID}&fields=#{reactions}&access_token=#{access_token}"
 	request.get url,{json:true},(err,res,body)->
 		for reaction in reactionsArray
 			myEmitter.emit 'reaction', "#{reaction}",body[postID]["reactions_#{reaction.toLowerCase()}"].summary.total_count
 
 refreshComments = ->
+	return unless postID?
+	return if postID is ''
 	request {
 		method : "GET"
 		url : "https://graph.facebook.com/v2.8/#{postID}/comments?filter=stream&order=reverse_chronological"
@@ -40,15 +44,15 @@ refreshComments = ->
 rComments = ->
 	clearTimeout(timer1) if timer1
 	refreshComments()
-	timer1 = setTimeout rComments, refreshTime * 1000
+	timer1 = setTimeout rComments, ~~refreshTime * 1000
 
 rCounts = ->
 	clearTimeout(timer2) if timer2
 	refreshCounts()
-	timer2 = setTimeout rCounts, refreshTime * 1000
+	timer2 = setTimeout rCounts, ~~refreshTime * 1000
 
 module.exports = (conf)->
-	{access_token,postID,refreshTime} = conf
+	{access_token,post_id:postID,refresh_time:refreshTime} = conf
 	rComments()
 	rCounts()
 	return myEmitter

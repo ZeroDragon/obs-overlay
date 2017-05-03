@@ -7,7 +7,7 @@ saveComment = (comment)->
 	brain.ttl "comments:#{comment.key}", 86400
 
 saveReaction = (reaction,count)->
-	{facebook:{postID:postID}} = brain.get 'config:facebook'
+	{post_id:postID} = brain.get 'config:facebook'
 	reactionKey = "reactions:#{postID}"
 	actual = brain.get reactionKey
 	if actual?
@@ -19,7 +19,7 @@ saveReaction = (reaction,count)->
 	brain.ttl reactionKey, 86400
 
 saveSalt = (plusOrMinus)->
-	{facebook:{postID:postID}} = brain.get 'config:facebook'
+	{post_id:postID} = brain.get 'config:facebook'
 	reactionKey = "reactions:#{postID}"
 	actual = brain.get reactionKey
 	actual = {SALT:0} unless actual?.SALT?
@@ -28,13 +28,20 @@ saveSalt = (plusOrMinus)->
 	brain.set reactionKey, actual
 	brain.ttl reactionKey, 86400
 
-if brain.get 'config:facebook'
-	facebookMiner = require('./miner-facebook')(brain.get('config:facebook'))
+prevConfigFacebook = null
+prevConfigTwitch = null
+
+configFacebook = brain.get 'config:facebook'
+if configFacebook
+	prevConfigFacebook = configFacebook
+	facebookMiner = require('./miner-facebook')(configFacebook)
 	facebookMiner.on 'reaction', saveReaction
 	facebookMiner.on 'comment', saveComment
 
-if brain.get 'config:twitch'
-	twitchMiner = require('./miner-twitch')(brain.get('config:twitch'))
+configTwitch = brain.get 'config:twitch'
+if configTwitch
+	configTwitch.bot_in_chat = brain.get('config:displays').bot_in_chat
+	twitchMiner = require('./miner-twitch')(configTwitch)
 	twitchMiner.on 'chat', saveComment
 	twitchMiner.on 'salter', saveSalt
 

@@ -9,7 +9,15 @@ app.use bParser.urlencoded { extended: true,limit: '2mb' }
 app.use bParser.json({limit: '2mb'})
 
 app.get '/', (req, res)->
-	res.render "index"
+	displays = brain.get 'config:displays'
+	display = {
+		displayChat : displays.chat is 'true'
+		displayCamera : displays.camera is 'true'
+		displayReactions : displays.reactions is 'true'
+		reactions : ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT'].filter (e)->
+			displays["reaction_#{e}"] is 'true'
+	}
+	res.render "index", display
 app.get '/configure', (req,res)->
 	res.render 'configure'
 app.get '/oauth/:key?', (req,res)->
@@ -17,14 +25,15 @@ app.get '/oauth/:key?', (req,res)->
 		res.render 'oauth'
 		return
 	actual = brain.get("config:twitch") or {}
-	actual.pass = "oauth:#{req.params.key}"
+	actual.pass = req.params.key
 	brain.set "config:twitch", actual
 	res.sendStatus 200
 app.get '/actualConfigurations', (req,res)->
 	res.json brain.get "config"
 
 app.post '/saveConfig', (req,res)->
-	console.log req.body
+	for own k,v of req.body
+		brain.set "config:#{k}",v
 	res.sendStatus 200
 
 app.get '/comments',(req,res)->
@@ -32,7 +41,7 @@ app.get '/comments',(req,res)->
 	res.json comments.sort (a,b)-> ~~a.key - ~~b.key
 app.get '/reactions',(req,res)->
 	facebookConfig = brain.get "config:facebook"
-	postID = facebookConfig?.postID or null
+	postID = facebookConfig?.post_id or null
 	reactions = brain.get("reactions:#{postID}") or {}
 	for i in ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
 		reactions[i] = 0 unless reactions[i]?
