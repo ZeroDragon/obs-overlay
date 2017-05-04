@@ -54,7 +54,7 @@ app.get '/newFollower',(req,res)->
 	if newFollower?
 		delete newFollower.value.new
 		brain.set "followers:#{newFollower.key}", newFollower.value
-		res.json newFollower
+		res.json newFollower.value
 	else
 		res.json null
 

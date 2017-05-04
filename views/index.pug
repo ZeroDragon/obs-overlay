@@ -13,6 +13,31 @@ html
 				cameraHeight = 180
 				reactionsHeight = 70
 				spacing = 10
+
+				@keyframes followerAnimation {
+					0%{
+						top 0
+						opacity 0
+					}
+					10%{
+						opacity 1
+					}
+					25% {
+						top 20px
+					}
+					75% {
+						top 20px
+						opacity 1
+					}
+					80%{
+						opacity 0
+					}
+					100% {
+						top -150px
+						opacity 0
+					}
+				}
+
 				body
 					&,*
 						box-sizing border-box
@@ -55,47 +80,35 @@ html
 							border 2px solid rgba(darken(accentColor, 50%),0.3)
 							width calc(100% + 9px)
 							height calc(100% + 9px)
-					.nameZone
-						position absolute
+				.accent
+					position absolute
+					bottom 0
+					width 100%
+					height 100%
+					overflow hidden
+					&.right
+						transform scaleX(-1)
+					&.top
+						transform scaleY(-1)
+					&.topright
+						transform scale(-1,-1)
+					.triangle, .rect1, .rect2
+						left 0
 						bottom 0
-						width 100%
 						background-color accentColor
-						text-align center
-						font-family 'Press Start 2P', cursive
-						font-size 12px
-						text-transform uppercase
-						height 25px
-						line-height 25px
-						box-shadow 0px -2px 2px 0px rgba(#000,.3)
-					.accent
 						position absolute
-						bottom 0
-						width 100%
-						height 100%
-						overflow hidden
-						&.right
-							transform scaleX(-1)
-						&.top
-							transform scaleY(-1)
-						&.topright
-							transform scale(-1,-1)
-						.triangle, .rect1, .rect2
-							left 0
-							bottom 0
-							background-color accentColor
-							position absolute
-							box-shadow 1px 5px 2px 1px rgba(#000,.3)
-							transform skew(45deg)
-						.triangle
-							width 38px
-							height 38px
-							left -30px
-						.rect1
-							width 20%
-							height 10px
-						.rect2
-							width 25%
-							height 5px
+						box-shadow 1px 5px 2px 1px rgba(#000,.3)
+						transform skew(45deg)
+					.triangle
+						width 38px
+						height 38px
+						left -30px
+					.rect1
+						width 20%
+						height 10px
+					.rect2
+						width 25%
+						height 5px
 				.reactionsZone
 					display none
 					justify-content space-between
@@ -160,6 +173,45 @@ html
 						background-color rgba(#fff,0.9)
 						font-size 12px
 						line-height 12px
+				.animateFollowers
+					animation-name followerAnimation
+				.newFollowerZone
+					position absolute
+					top -150px
+					left 50%
+					height 70px
+					width 50%
+					transform translateX(-50%)
+					animation-duration: 5s;
+					border 2px solid darken(accentColor,40%)
+					.decoration
+						position absolute
+						transform skew(35deg) rotate(3deg)
+						background-color accentColor
+						top 0
+						left 0
+						width 100%
+						height 100%
+						border 2px solid darken(accentColor,40%)
+						box-shadow 1px 5px 2px 1px rgba(#000,.3)
+					.nameZone
+						position absolute
+						top 0
+						left 0
+						background-color #000
+						width 100%
+						height 100%
+						border-top 5px dashed darken(accentColor,40%)
+						border-bottom 5px dashed darken(accentColor,40%)
+						display flex
+						color #fff
+						justify-content center
+						align-items center
+						span
+							font-family 'Press Start 2P', cursive
+						.span2
+							color accentColor
+
 	body
 		include ../assets/twitch.svg
 		include ../assets/facebook.svg
@@ -187,6 +239,20 @@ html
 					.reaction(class=`${reaction}`)
 						img(src=`/${reaction}.gif`)
 						.counter {{reactions.#{reaction}}}
+			.newFollowerZone#newFollowerZone: .relative
+				.decoration
+				.nameZone
+					span.span2 New Follower:&nbsp;
+					span.name
+				.accent: .relative
+					.rect2
+					.rect1
+					.triangle
+				.accent.topright: .relative
+					.rect2
+					.rect1
+					.triangle
+				
 		script
 			:coffee-script(bare)
 				addZ = (i)-> "00#{i}".slice(-2)
@@ -210,10 +276,23 @@ html
 					data : $scope
 					computed : $computed
 
+				showingFollower = false
+
 				reloadStuff = ->
-					console.log 'reloading'
 					$.get '/comments', (data)-> $scope.commentsRaw = data
 					$.get '/reactions', (data)-> $scope.reactions = data
+					if !showingFollower
+						showingFollower = true
+						$.get '/newFollower', (data)->
+							if data?.name?
+								$('#newFollowerZone .name').text data.name
+								$('#newFollowerZone').addClass('animateFollowers')
+								setTimeout ->
+									$('#newFollowerZone').removeClass('animateFollowers')
+									showingFollower = false
+								,5000
+							else
+								showingFollower = false
 
 				setInterval reloadStuff, 1*1000
 				reloadStuff()

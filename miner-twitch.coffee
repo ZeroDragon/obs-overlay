@@ -61,6 +61,7 @@ getFollowsAndSubs = ->
 			json:true
 		},(err,res,body)->
 			return if err
+			return unless body?._id?
 			myEmitter.emit 'saveTwitchData', {key:"channelID",value:body._id}
 			cb() if cb?
 
@@ -76,6 +77,7 @@ getFollowsAndSubs = ->
 			json:true
 		},(err,res,body)->
 			return if err
+			return unless body?.follows?
 			myEmitter.emit "saveTwitchFollowers", body.follows.map (e)->
 				return {
 					name : e.user.name

@@ -17,6 +17,7 @@ refreshCounts = ->
 	return if postID is ''
 	url = "https://graph.facebook.com/v2.8/?ids=#{postID}&fields=#{reactions}&access_token=#{access_token}"
 	request.get url,{json:true},(err,res,body)->
+		return unless body?
 		for reaction in reactionsArray
 			myEmitter.emit 'reaction', "#{reaction}",body[postID]["reactions_#{reaction.toLowerCase()}"].summary.total_count
 
@@ -29,6 +30,7 @@ refreshComments = ->
 		headers : {"Authorization" : "OAuth #{access_token}"}
 		json : true
 	},(err,res,body)->
+		return unless body?.data?
 		data = body.data.map (e)->
 			{
 				key : new Date(e.created_time).getTime()
