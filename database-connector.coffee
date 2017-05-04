@@ -28,6 +28,23 @@ saveSalt = (plusOrMinus)->
 	brain.set reactionKey, actual
 	brain.ttl reactionKey, 86400
 
+saveTwitchData = (obj)->
+	brain.set "twitchData:#{obj.key}", obj.value
+saveTwitchFollowers = (arr)->
+	actual = brain.get "followers"
+	arr = arr.map (e)->
+		return {
+			key : e.id
+			value : {
+				name : e.name
+				new : true
+			}
+		}
+	arr = arr.filter (e)->
+		return !actual.filter((ee)->ee.key is e.key)[0]?
+	for follower in arr
+		brain.set "followers:#{follower.key}", follower.value
+
 prevConfigFacebook = null
 prevConfigTwitch = null
 
@@ -40,9 +57,15 @@ if configFacebook
 
 configTwitch = brain.get 'config:twitch'
 if configTwitch
+	brain.del "twitchData:channelID"
 	configTwitch.bot_in_chat = brain.get('config:displays').bot_in_chat
-	twitchMiner = require('./miner-twitch')(configTwitch)
+	fb = brain.get('config:facebook')
+	if fb?
+		configTwitch.refresh_time = fb.refresh_time or 5
+	twitchMiner = require('./miner-twitch')(configTwitch,brain)
 	twitchMiner.on 'chat', saveComment
 	twitchMiner.on 'salter', saveSalt
+	twitchMiner.on 'saveTwitchData', saveTwitchData
+	twitchMiner.on 'saveTwitchFollowers', saveTwitchFollowers
 
 module.exports = brain

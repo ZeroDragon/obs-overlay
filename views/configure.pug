@@ -81,10 +81,17 @@ html
 					input#fb_post_id(type="text",v-model="obj.facebook.post_id")
 					.text Once you have your post in facebook, you'll need to get the POST id to pull data from
 					.text Follow <a target="_blank" href="http://blog.krischant.com/post/54131988674/tutorial-finding-a-post-or-comment-id-on-facebook">this guide</a> to find it
+			br
+			.section
 				.row
 					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional, default: 5 seconds)</span>
 					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.facebook.refresh_time")
-					.text Needed to set the polling frequency. 5 seconds is recommended to avoid excess traffic.
+					.text
+						|Needed to set the polling frequency.
+						br
+						|5 seconds is recommended to avoid excess traffic.
+						br
+						|This affects facebook comments and reactions aswell as twitch followers
 			br
 			.section
 				h2 Twitch

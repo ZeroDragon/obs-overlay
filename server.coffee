@@ -1,3 +1,5 @@
+port = 1337
+
 express = require 'express'
 app = express()
 brain = require './database-connector'
@@ -46,7 +48,15 @@ app.get '/reactions',(req,res)->
 	for i in ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
 		reactions[i] = 0 unless reactions[i]?
 	res.json reactions
+app.get '/newFollower',(req,res)->
+	followers = brain.get('followers')
+	newFollower = followers.filter((e)->e.value.new?)[0]
+	if newFollower?
+		delete newFollower.value.new
+		brain.set "followers:#{newFollower.key}", newFollower.value
+		res.json newFollower
+	else
+		res.json null
 
-port = 1337
 app.listen port, ->
 	console.log("Listening on port #{port}!")

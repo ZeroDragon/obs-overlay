@@ -1,9 +1,11 @@
 WebSocket = require 'ws'
+request = require 'request'
 parseIRC = require './parseIRC'
 getEmotes = require './generateEmotes'
 robot = require './robot'
 emoticons = null
 twitch = null
+brain = null
 EventEmitter = require('events')
 myEmitter = new EventEmitter()
 
@@ -44,6 +46,49 @@ processTwitchMessage = (nick,tags,message)->
 			message : message
 		}
 	}
+
+timer1 = null
+getFollowsAndSubs = ->
+	clearTimeout(timer1) if timer1
+
+	getChannelID = (cb)->
+		request.get {
+			url : "https://api.twitch.tv/kraken/channels/#{twitch.channel}"
+			headers : {
+				"Accept" : "application/vnd.twitchtv.v3+json"
+				"Client-ID" : twitch.client_id
+			},
+			json:true
+		},(err,res,body)->
+			return if err
+			myEmitter.emit 'saveTwitchData', {key:"channelID",value:body._id}
+			cb() if cb?
+
+	getFollowers = ()->
+		return if !brain.get("twitchData:channelID")?
+		channelID = brain.get("twitchData:channelID")
+		request.get {
+			url : "https://api.twitch.tv/kraken/channels/#{channelID}/follows"
+			headers : {
+				"Accept" : "application/vnd.twitchtv.v5+json"
+				"Client-ID" : twitch.client_id
+			},
+			json:true
+		},(err,res,body)->
+			return if err
+			myEmitter.emit "saveTwitchFollowers", body.follows.map (e)->
+				return {
+					name : e.user.name
+					id : e.user._id
+				}
+
+	if !brain.get("twitchData:channelID")?
+		getChannelID getFollowers
+	else
+		getFollowers()
+	
+	timer1 = setTimeout getFollowsAndSubs ,~~twitch.refresh_time * 1000
+
 	
 startSocket = ->
 	return unless twitch.pass? and twitch.username? and twitch.channel?
@@ -88,8 +133,10 @@ startSocket = ->
 			# else
 			# 	console.log message.command,message
 
-module.exports = (cnf)->
+module.exports = (cnf,b)->
 	{emoticons} = getEmotes()
 	twitch = cnf
 	startSocket()
+	brain = b
+	getFollowsAndSubs()
 	return myEmitter
