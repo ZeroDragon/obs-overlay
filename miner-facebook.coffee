@@ -17,7 +17,7 @@ refreshCounts = ->
 	return if postID is ''
 	url = "https://graph.facebook.com/v2.8/?ids=#{postID}&fields=#{reactions}&access_token=#{access_token}"
 	request.get url,{json:true},(err,res,body)->
-		return unless body?
+		return unless body?[postID]?
 		for reaction in reactionsArray
 			myEmitter.emit 'reaction', "#{reaction}",body[postID]["reactions_#{reaction.toLowerCase()}"].summary.total_count
 
