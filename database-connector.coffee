@@ -1,4 +1,4 @@
-fileDB = require './filedatabase'
+fileDB = require 'filedatabase'
 brain = new fileDB
 addZ = (i)-> "00#{i}".slice(-2)
 
@@ -45,24 +45,13 @@ saveTwitchFollowers = (arr)->
 	for follower in arr
 		brain.set "followers:#{follower.key}", follower.value
 
-prevConfigFacebook = null
-prevConfigTwitch = null
-
-configFacebook = brain.get 'config:facebook'
-if configFacebook
-	prevConfigFacebook = configFacebook
-	facebookMiner = require('./miner-facebook')(configFacebook)
+if brain.get('config:facebook')?
+	facebookMiner = require('./miner-facebook')(brain)
 	facebookMiner.on 'reaction', saveReaction
 	facebookMiner.on 'comment', saveComment
 
-configTwitch = brain.get 'config:twitch'
-if configTwitch
-	brain.del "twitchData:channelID"
-	configTwitch.bot_in_chat = brain.get('config:displays').bot_in_chat
-	fb = brain.get('config:facebook')
-	if fb?
-		configTwitch.refresh_time = fb.refresh_time or 5
-	twitchMiner = require('./miner-twitch')(configTwitch,brain)
+if brain.get('config:twitch')?
+	twitchMiner = require('./miner-twitch')(brain)
 	twitchMiner.on 'chat', saveComment
 	twitchMiner.on 'salter', saveSalt
 	twitchMiner.on 'saveTwitchData', saveTwitchData

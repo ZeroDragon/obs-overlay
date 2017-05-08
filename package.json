@@ -1,10 +1,14 @@
 {
   "name": "obs-overlay",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon start.js",
+    "fstart": "forever start start.js --watchDirectory=$PWD",
+    "stop": "forever stopall",
+    "log": "forever logs 0 -f",
+    "start": "yarn stop & yarn fstart & yarn log"
   },
   "author": "",
   "license": "ISC",
@@ -12,10 +16,15 @@
     "body-parser": "^1.17.1",
     "coffee-script": "^1.12.5",
     "express": "^4.15.2",
+    "filedatabase": "file:./filedatabase",
+    "forever": "^0.15.3",
     "jstransformer-coffee-script": "^1.1.0",
     "jstransformer-stylus": "^1.3.0",
     "pug": "^2.0.0-beta.12",
     "request": "^2.81.0",
     "ws": "^2.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
   }
 }

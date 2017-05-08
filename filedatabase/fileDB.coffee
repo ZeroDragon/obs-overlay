@@ -1,7 +1,7 @@
 fs = require 'fs'
 config = require './config.json'
 module.exports = class FileDB
-	storage : "#{__dirname}/storage/"
+	storage : "#{process.cwd()}/storage/"
 	constructor : (storage)->
 		@storage = storage if storage?
 		{@info} = require('nicelogger').config(config.logger)

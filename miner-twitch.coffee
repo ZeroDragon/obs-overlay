@@ -135,10 +135,15 @@ startSocket = ->
 			# else
 			# 	console.log message.command,message
 
-module.exports = (cnf,b)->
+module.exports = (b)->
 	{emoticons} = getEmotes()
-	twitch = cnf
-	startSocket()
 	brain = b
+	twitch = brain.get 'config:twitch'
+	brain.del "twitchData:channelID"
+	twitch.bot_in_chat = brain.get('config:displays').bot_in_chat
+	fb = brain.get('config:facebook')
+	if fb?
+		twitch.refresh_time = fb.refresh_time or 5
+	startSocket()
 	getFollowsAndSubs()
 	return myEmitter

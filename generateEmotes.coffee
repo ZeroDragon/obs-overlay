@@ -6,6 +6,7 @@ generateFile = (wReturn)->
 	console.log 'Re-Generating emoticons file'
 	request.get 'https://api.twitch.tv/kraken/chat/emoticons',(err,resp,body)->
 		fs.writeFileSync file, body
+		console.log "Emoticons done!"
 		checkFile() if wReturn?
 
 checkFile = ->
