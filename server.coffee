@@ -20,10 +20,12 @@ app.get '/', (req, res)->
 		displayReactions : displays.reactions is 'true'
 		reactions : ['LIKE','LOVE','THANKFUL','HAHA','WOW','SAD','ANGRY','SALT'].filter (e)->
 			displays["reaction_#{e}"] is 'true'
+		showDemo : req.query.demo?
 	}
 	res.render "index", display
 app.get '/style.css', (req,res)->
-	variables = {
+	varsFromDB = brain.get('config:variables')
+	variables = varsFromDB or {
 		accentColor : "#ff6a00"
 		cameraWidth : 300
 		cameraHeight : 170

@@ -5,6 +5,7 @@ html
 		link(href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet")
 		script(src="https://unpkg.com/vue@2.3.0")
 		script(src="https://code.jquery.com/jquery-2.2.4.min.js")
+		script(src="https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js")
 		style
 			:stylus
 				body
@@ -18,6 +19,10 @@ html
 						margin 10px
 					b
 						font-weight 700
+					a
+						color #008000
+					.hidden
+						display none
 					.section
 						padding 10px
 						background-color #f5f6f7
@@ -28,6 +33,15 @@ html
 					input
 						padding 4px
 						outline none
+						&.jscolor{
+							font-size 0
+							width 100px
+							height 15px
+							vertical-align middle
+							border none
+							cursor pointer
+							border-radius 4px
+						}
 					label
 						margin 0 10px
 						span
@@ -39,8 +53,6 @@ html
 					.text
 						margin-left 20px
 						font-size 12px
-						a
-							color #008000
 					.reactionsSelector
 						display flex
 						background-color #fff
@@ -66,6 +78,19 @@ html
 						cursor pointer
 						&:hover
 							background-color darken(green,20%)
+					.wrap
+						width 640px
+						height 400px
+						padding 0
+						overflow hidden
+						position relative
+					.iframe
+						position absolute
+						width 1280px
+						height 800px
+						transform scale(0.5)
+						transform-origin 0 0
+
 	body
 		#app
 			.saveBtn(v-on:click="saveData") SAVE
@@ -80,11 +105,12 @@ html
 					label(for="fb_post_id") Post ID <span class="req">(Required)</span>
 					input#fb_post_id(type="text",v-model="obj.facebook.post_id")
 					.text Once you have your post in facebook, you'll need to get the POST id to pull data from
-					.text Follow <a target="_blank" href="http://blog.krischant.com/post/54131988674/tutorial-finding-a-post-or-comment-id-on-facebook">this guide</a> to find it
+					.text Follow <a target="_blank" href="http://blog.krischant.com/post/54131988674/tutorial-finding-a-post-or-comment-id-on-facebook">this guide</a> to find it,
+					.text NOTE: Due to facebook limitations, only posts made by a facebook page can be accesed to pull reactions and comments.
 			br
 			.section
 				.row
-					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional, default: 5 seconds)</span>
+					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional. Def: 5 seconds)</span>
 					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.facebook.refresh_time")
 					.text
 						|Needed to set the polling frequency.
@@ -123,6 +149,32 @@ html
 					.text this value is pupulated after you click the previous link.
 			br
 			.section
+				h2 Overlay dimentions
+				.row
+					label(for="accent_color") Accent color <span class="req">(Required)</span>
+					input#accent_color(class="jscolor {hash:true}",type="text",v-model="obj.variables.accentColor")
+				.row
+					label(for="cameraWidth") Overlay Width <span class="req">(Required)</span> <span class="nreq">(Def: 300)</span>
+					input#cameraWidth(type="text",v-model="obj.variables.cameraWidth")
+				.row
+					label(for="cameraHeight") Camera Height <span class="req">(Required)</span> <span class="nreq">(Def: 170)</span>
+					input#cameraHeight(type="text",v-model="obj.variables.cameraHeight")
+					.text Vertical space that camera zone is going to take in the overlay
+				.row
+					label(for="reactionsHeight") Reactions Height <span class="req">(Required)</span> <span class="nreq">(Def: 70)</span>
+					input#reactionsHeight(type="text",v-model="obj.variables.reactionsHeight")
+					.text Vertical space that reactions are going to take in the overlay
+				.row
+					label(for="spacing") Spacing <span class="req">(Required)</span> <span class="nreq">(Def: 10)</span>
+					input#spacing(type="text",v-model="obj.variables.spacing")
+					.text The space between objects, also the space between edge and objects
+			br
+			.section
+				h2 Preview
+				.wrap: iframe.iframe(src="/?demo")
+				a.hidden(onclick="$('.iframe').attr({src:'/?demo'})") Reload
+			br
+			.section
 				h2 Display
 				.row
 					input#displays_chat(type="checkbox",v-model="obj.displays.chat")
@@ -157,11 +209,21 @@ html
 						return "window.open('https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.obj.twitch.client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login','popup','width=600,height=600');"
 				}
 				$scope =
-					obj : {facebook:{},twitch:{},displays:{}}
+					obj : {facebook:{},twitch:{},displays:{},variables:{}}
+					saving : false
 
 				$methods =
 					saveData : ->
-						$.post '/saveConfig', $scope.obj
+						return if $scope.saving
+						$scope.saving = true
+						$('.saveBtn').text('SAVING...')
+						$.post '/saveConfig', $scope.obj, ->
+							$('.saveBtn').text('Data Updated')
+							$('a.hidden').click()
+							setTimeout ->
+								$scope.saving = false
+								$('.saveBtn').text('SAVE')
+							,1500
 
 				app = new Vue
 					el : "#app"
@@ -187,6 +249,12 @@ html
 						if displaysRaw?.value?
 							for own k,v of displaysRaw.value
 								displays[k] = v is 'true'
+
+						variables = data.filter((e)-> e.key is 'variables')[0]
+						if variables?.value?
+							variables = variables.value
+						else
+							variables = {}
 
 						$scope.obj = {
 							facebook : {
@@ -214,5 +282,13 @@ html
 								reaction_ANGRY : displays.reaction_ANGRY
 								reaction_SALT : displays.reaction_SALT
 							}
+							variables : {
+								accentColor : variables.accentColor or "#ff6a00"
+								cameraWidth : variables.cameraWidth or 300
+								cameraHeight : variables.cameraHeight or 170
+								reactionsHeight : variables.reactionsHeight or 70
+								spacing : variables.spacing or 10
+							}
 						}
+						$('#accent_color')[0].jscolor.fromString($scope.obj.variables.accentColor)
 				update()
