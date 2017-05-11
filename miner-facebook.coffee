@@ -4,7 +4,7 @@ myEmitter = new EventEmitter()
 
 timer1 = timer2 = brain = null
 addZ = (i)-> "00#{i}".slice(-2)
-reactionsArray = ['LIKE', 'LOVE', 'WOW', 'HAHA', 'SAD', 'ANGRY']
+reactionsArray = ['LIKE', 'LOVE', 'THANKFUL' ,'WOW', 'HAHA', 'SAD', 'ANGRY']
 reactions = reactionsArray
 	.map (e)->
 		code = "reactions_#{e.toLowerCase()}"

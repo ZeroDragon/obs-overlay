@@ -141,7 +141,7 @@ html
 				.row
 					label Select Reactions
 					.reactionsSelector
-						for reaction in ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
+						for reaction in ['LIKE','LOVE','THANKFUL','HAHA','WOW','SAD','ANGRY','SALT']
 							.ract
 								label
 									img(src=`${reaction}.gif`)
@@ -183,7 +183,7 @@ html
 						else
 							twitch = {}
 						displaysRaw = data.filter((e)-> e.key is 'displays')[0]
-						displays = {chat:true,bot_in_chat : true,camera : true,reactions : true,reaction_LIKE : true,reaction_LOVE : true,reaction_HAHA : true,reaction_WOW : true,reaction_SAD : true,reaction_ANGRY : true,reaction_SALT : true,}
+						displays = {chat:true,bot_in_chat : true,camera : true,reactions : true,reaction_LIKE : true,reaction_LOVE : true,reaction_THANKFUL : true,reaction_HAHA : true,reaction_WOW : true,reaction_SAD : true,reaction_ANGRY : true,reaction_SALT : true,}
 						if displaysRaw?.value?
 							for own k,v of displaysRaw.value
 								displays[k] = v is 'true'
@@ -207,6 +207,7 @@ html
 								reactions : displays.reactions
 								reaction_LIKE : displays.reaction_LIKE
 								reaction_LOVE : displays.reaction_LOVE
+								reaction_THANKFUL : displays.reaction_THANKFUL
 								reaction_HAHA : displays.reaction_HAHA
 								reaction_WOW : displays.reaction_WOW
 								reaction_SAD : displays.reaction_SAD

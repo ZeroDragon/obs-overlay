@@ -4,6 +4,8 @@ express = require 'express'
 app = express()
 brain = require './database-connector'
 bParser = require 'body-parser'
+stylus = require 'stylus'
+fs = require 'fs'
 
 app.set('view engine', 'pug')
 app.use(express.static('assets'))
@@ -16,10 +18,29 @@ app.get '/', (req, res)->
 		displayChat : displays.chat is 'true'
 		displayCamera : displays.camera is 'true'
 		displayReactions : displays.reactions is 'true'
-		reactions : ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT'].filter (e)->
+		reactions : ['LIKE','LOVE','THANKFUL','HAHA','WOW','SAD','ANGRY','SALT'].filter (e)->
 			displays["reaction_#{e}"] is 'true'
 	}
 	res.render "index", display
+app.get '/style.css', (req,res)->
+	variables = {
+		accentColor : "#ff6a00"
+		cameraWidth : 300
+		cameraHeight : 170
+		reactionsHeight : 70
+		spacing : 10
+	}
+	str = stylus(fs.readFileSync('./assets/style.styl',{encoding:'utf8'}))
+	for own k,v of variables
+		str.define k,v
+	str.render (err,css)->
+		console.log(err) if err
+		if css
+			res.header "Content-type", "text/css"
+			res.send css
+		else
+			res.sendStatus(404)
+
 app.get '/configure', (req,res)->
 	res.render 'configure'
 app.get '/oauth/:key?', (req,res)->
@@ -45,7 +66,7 @@ app.get '/reactions',(req,res)->
 	facebookConfig = brain.get "config:facebook"
 	postID = facebookConfig?.post_id or null
 	reactions = brain.get("reactions:#{postID}") or {}
-	for i in ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY','SALT']
+	for i in ['LIKE','LOVE','THANKFUL','HAHA','WOW','SAD','ANGRY','SALT']
 		reactions[i] = 0 unless reactions[i]?
 	res.json reactions
 app.get '/newFollower',(req,res)->
