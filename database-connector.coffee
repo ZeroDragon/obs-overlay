@@ -57,4 +57,8 @@ if brain.get('config:twitch')?
 	twitchMiner.on 'saveTwitchData', saveTwitchData
 	twitchMiner.on 'saveTwitchFollowers', saveTwitchFollowers
 
+if brain.get('config:youtube')?
+	youtubeMiner = require('./miner-youtube')(brain)
+	youtubeMiner.on 'comment', saveComment
+
 module.exports = brain

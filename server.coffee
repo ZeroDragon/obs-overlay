@@ -30,6 +30,7 @@ app.get '/style.css', (req,res)->
 		cameraWidth : 300
 		cameraHeight : 170
 		reactionsHeight : 70
+		chatHeight : 250
 		spacing : 10
 	}
 	str = stylus(fs.readFileSync('./assets/style.styl',{encoding:'utf8'}))
@@ -63,7 +64,7 @@ app.post '/saveConfig', (req,res)->
 
 app.get '/comments',(req,res)->
 	comments = brain.get 'comments'
-	res.json comments.sort (a,b)-> ~~a.key - ~~b.key
+	res.json comments.sort (a,b)-> parseInt(a.key) - parseInt(b.key)
 app.get '/reactions',(req,res)->
 	facebookConfig = brain.get "config:facebook"
 	postID = facebookConfig?.post_id or null

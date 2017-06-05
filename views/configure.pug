@@ -109,6 +109,14 @@ html
 					.text NOTE: Due to facebook limitations, only posts made by a facebook page can be accesed to pull reactions and comments.
 			br
 			.section
+				h2 Youtube
+				.row
+					label(for="yt_video_id") Video ID
+					input#yt_video_id(type="text",v-model="obj.youtube.video_id")
+					.text Once you have your video in youtube, you'll need to get the VIDEO id to pull data from
+					.text Follow <a target="_blank" href="https://docs.joeworkman.net/rapidweaver/stacks/youtube/video-id">this guide</a> to find it,
+			br
+			.section
 				.row
 					label(for="fb_refresh_time") Refresh time <span class="nreq">(Optional. Def: 5 seconds)</span>
 					input#fb_refresh_time(type="text",placeholder="5",v-model="obj.facebook.refresh_time")
@@ -117,7 +125,7 @@ html
 						br
 						|5 seconds is recommended to avoid excess traffic.
 						br
-						|This affects facebook comments and reactions aswell as twitch followers
+						|This affects facebook comments and reactions aswell as twitch followers and youtube live chat.
 			br
 			.section
 				h2 Twitch
@@ -165,6 +173,10 @@ html
 					input#reactionsHeight(type="text",v-model="obj.variables.reactionsHeight")
 					.text Vertical space that reactions are going to take in the overlay
 				.row
+					label(for="chatHeight") Chat Height <span class="req">(Required)</span> <span class="nreq">(Def: 250)</span>
+					input#chatHeight(type="text",v-model="obj.variables.chatHeight")
+					.text Vertical space that chat is going to take in the overlay
+				.row
 					label(for="spacing") Spacing <span class="req">(Required)</span> <span class="nreq">(Def: 10)</span>
 					input#spacing(type="text",v-model="obj.variables.spacing")
 					.text The space between objects, also the space between edge and objects
@@ -209,7 +221,7 @@ html
 						return "window.open('https://api.twitch.tv/kraken/oauth2/authorize?response_type=token&client_id=#{$scope.obj.twitch.client_id}&redirect_uri=http://localhost:1337/oauth&scope=channel_subscriptions chat_login','popup','width=600,height=600');"
 				}
 				$scope =
-					obj : {facebook:{},twitch:{},displays:{},variables:{}}
+					obj : {facebook:{},twitch:{},youtube:{},displays:{},variables:{}}
 					saving : false
 
 				$methods =
@@ -238,7 +250,11 @@ html
 							facebook = facebook.value
 						else
 							facebook = {}
-
+						youtube = data.filter((e)-> e.key is 'youtube')[0]
+						if youtube?.value?
+							youtube = youtube.value
+						else
+							youtube = {}
 						twitch = data.filter((e)-> e.key is 'twitch')[0]
 						if twitch?.value?
 							twitch = twitch.value
@@ -261,6 +277,9 @@ html
 								access_token : facebook.access_token or ""
 								post_id : facebook.post_id or ""
 								refresh_time : facebook.refresh_time or "5"
+							}
+							youtube : {
+								video_id : youtube.video_id or ""
 							}
 							twitch : {
 								username : twitch.username or ""
@@ -287,6 +306,7 @@ html
 								cameraWidth : variables.cameraWidth or 300
 								cameraHeight : variables.cameraHeight or 170
 								reactionsHeight : variables.reactionsHeight or 70
+								chatHeight : variables.chatHeight or 250
 								spacing : variables.spacing or 10
 							}
 						}

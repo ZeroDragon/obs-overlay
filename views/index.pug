@@ -24,15 +24,18 @@ html
 				}
 		include ../assets/twitch.svg
 		include ../assets/facebook.svg
+		include ../assets/youtube.svg
 		.container.relative#app
 			.chatZone(style=`display:${displayChat?'flex':'none'};`)
 				.row(v-for="row in comments",v-bind:class="row.source")
 					.author
 						i.source.twitch: svg(viewBox="0 0 128 138"): use(xlink:href="#twitch")
 						i.source.facebook: svg(viewBox="0 0 258 258"): use(xlink:href="#facebook")
-						|{{row.author}}
+						i.source.youtube: svg(viewBox="0 -10 512 512"): use(xlink:href="#youtube")
+						span.name {{row.author}}
 						span.time {{row.time}}
 					.message(v-html="row.message")
+
 			.cameraZone(style=`display:${displayCamera?'flex':'none'};`): .relative
 				.inner
 					if showDemo
@@ -95,7 +98,7 @@ html
 						value : {
 							author : ["Zero","John","Vanessa","Richard","Jane"][Math.floor(Math.random()*5)]
 							message : ["LMFAO","Hey there, this is a dummy message","What a fail","You rock!","LOLOLOLOLOLOLOL"][Math.floor(Math.random()*5)]
-							source : ["twitch","facebook"][Math.floor(Math.random()*2)]
+							source : ["twitch","facebook","youtube"][Math.floor(Math.random()*3)]
 						}
 					}
 					$scope.reactions = {

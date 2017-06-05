@@ -2,7 +2,7 @@
   "name": "obs-overlay",
   "version": "1.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "server.coffee",
   "scripts": {
     "dev": "nodemon start.js",
     "fstart": "forever start start.js --watchDirectory=$PWD",
@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.1",
+    "cheerio": "^1.0.0-rc.1",
     "coffee-script": "^1.12.5",
     "express": "^4.15.2",
     "filedatabase": "file:./filedatabase",

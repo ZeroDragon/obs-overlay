@@ -1,14 +1,9 @@
 fs = require 'fs'
-config = require './config.json'
 module.exports = class FileDB
 	storage : "#{process.cwd()}/storage/"
 	constructor : (storage)->
 		@storage = storage if storage?
-		{@info} = require('nicelogger').config(config.logger)
-		@info "Connected to database on #{@storage}"
-	setLogLevel : (level)->
-		# info > info > warning > error > log > countdown > progress
-		@setLogLvl {logLevel:level}
+		console.log "Connected to database on #{@storage}"
 	setToFile : (file,data)->
 		fs.writeFileSync "#{@storage}#{file}", JSON.stringify data
 	getFromFile : (file)->
